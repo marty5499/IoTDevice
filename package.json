@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "針對 Node.js 環境中，以 MQTT 為通訊協定，設計一套可複用的 IoT 類別（`IoTDevice`）。其物件能夠：",
   "main": "IoTDevice.js",
+  "type": "module",
   "scripts": {
     "test": "jest --detectOpenHandles"
   },

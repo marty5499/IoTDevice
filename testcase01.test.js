@@ -1,4 +1,4 @@
-const IoTDevice = require('./IoTDevice');
+import IoTDevice from './IoTDevice.js';
 
 // Jest tests for IoTDevice
 describe('IoTDevice Communication Tests', () => {

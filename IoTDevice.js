@@ -1,6 +1,6 @@
-require('dotenv').config();
-const mqtt = require('mqtt');
-const { v4: uuidv4 } = require('uuid');
+import dotenv from 'dotenv';
+import mqtt from 'mqtt';
+import { v4 as uuidv4 } from 'uuid';
 
 class IoTDevice {
   /**
@@ -218,4 +218,4 @@ class IoTDevice {
   }
 }
 
-module.exports = IoTDevice;
+export default IoTDevice;
