@@ -1,6 +1,3 @@
-import dotenv from 'dotenv';
-dotenv.config();
-
 import IoTDevice from './IoTDevice.js';
 
 const aaa = new IoTDevice('aaa');

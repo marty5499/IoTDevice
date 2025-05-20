@@ -2,6 +2,8 @@ import dotenv from 'dotenv';
 import mqtt from 'mqtt';
 import { v4 as uuidv4 } from 'uuid';
 
+dotenv.config();
+
 class IoTDevice {
   /**
    * @param {string} deviceId

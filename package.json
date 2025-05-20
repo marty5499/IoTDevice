@@ -5,8 +5,19 @@
   "main": "IoTDevice.js",
   "type": "module",
   "scripts": {
-    "test": "jest --detectOpenHandles"
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest --detectOpenHandles",
+    "start": "node main.js"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "mqtt": "^5.7.0",
+    "uuid": "^9.0.1"
+  },
+  "jest": {
+    "transform": {},
+    "testEnvironment": "node",
+    "testTimeout": 10000
+  }
 }
