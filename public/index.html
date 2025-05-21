@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Browser IoT Device</title>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <script type="module" src="./iotDevice.js"></script>
+</head>
+
+<body>
+    <H1>Hello</H1>
+    <script type="module">
+        ((async function(){
+
+            const iot = new IoTDevice('iot');
+            await iot.connect();
+            console.log("connected...");
+            iot.proc('test', async (msg) => {
+                console.log('[aaa] 收到回覆:', msg.payload);
+            });
+            iot.pub("iot.test",'okok');
+        })())
+    </script>
+</body>
+
+</html>
