@@ -6,9 +6,15 @@ const bbb = new IoTDevice('bbb');
 await aaa.connect();
 await bbb.connect();
 
-bbb.proc('test', async (msg) => {
-    console.log('[bbb] 收到請求:', msg);
-    return { state: 'OK', echo: msg.payload };
+aaa.proc('test', async (msg) => {
+    console.log('[aaa] 收到回覆:', msg.payload.payload);
+    await aaa.disconnect();
+    await bbb.disconnect();
 });
-var rtn = await aaa.pubSync('bbb.test', { hello: 'world' });
-console.log('[aaa] 收到回覆:', rtn);
+
+bbb.proc('test', async (msg) => {
+    msg.payload = { rtn: 'OKOK' };
+    bbb.pub('aaa.test', msg);
+});
+
+aaa.pub('bbb.test', { hello: 'world' });
