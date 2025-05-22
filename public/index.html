@@ -415,6 +415,14 @@
 
             // 連接按鈕事件
             connectBtn.addEventListener('click', async () => {
+                // 獲取用戶輸入的設備 ID
+                deviceId = deviceIdInput.value.trim();
+
+                if (!deviceId) {
+                    alert('請輸入有效的設備 ID');
+                    return;
+                }
+
                 if (iot) {
                     // 如已連接，則斷開
                     await iot.disconnect();
@@ -539,6 +547,7 @@
                 // 即時發送滑桿數值
                 if (iot && iot.client && iot.client.connected) {
                     try {
+                        // 使用當前連接的 deviceId
                         iot.pub(`${deviceId}.mySlider`, { value: parseInt(this.value) });
                     } catch (error) {
                         console.error('滑桿數據即時發送錯誤:', error);
@@ -549,6 +558,7 @@
 
                 // 新增資料到試算表
                 const currentTime = new Date().toLocaleString();
+                // 使用當前連接的 deviceId
                 const dataToSave = [deviceId, parseInt(this.value), currentTime];
                 await appendToSheet(sheetUrl, dataToSave);
             });
