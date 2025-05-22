@@ -209,32 +209,6 @@
             border-radius: 4px;
             font-size: 16px;
         }
-
-        /* AI Chat Panel Styles */
-        #aiChatPanel {
-            /* Basic styles already inline, can be enhanced here */
-        }
-        #aiChatContent .message {
-            margin-bottom: 8px;
-            padding: 8px;
-            border-radius: 4px;
-            line-height: 1.4;
-        }
-        #aiChatContent .message.user {
-            color: #0063b1;
-            background-color: #e7f3fe;
-            text-align: left;
-        }
-        #aiChatContent .message.ai {
-            color: #205020;
-            background-color: #e9f5e9;
-            text-align: left;
-        }
-        #aiChatContent .message.error {
-            color: #D8000C;
-            background-color: #FFD2D2;
-            text-align: left;
-        }
     </style>
 </head>
 
@@ -261,7 +235,6 @@
         <div class="controls">
             <button id="connectBtn">連接設備</button>
             <button id="testBtn" disabled>測試讀取溫度</button>
-            <button id="askAiBtn">詢問 AI 種植建議</button>
         </div>
 
         <div class="device-id-input">
@@ -285,17 +258,6 @@
                     <div>接收值</div>
                     <div id="receivedValue">--</div>
                 </div>
-            </div>
-        </div>
-
-        <!-- AI Chat Panel -->
-        <div id="aiChatPanel" style="display: none; margin-top: 20px; width: 100%; max-width: 500px; border: 1px solid #ccc; padding: 10px; background-color: #f9f9f9; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <h3 style="margin: 0;">AI 種植建議</h3>
-                <button id="closeAiChatBtn" style="padding: 5px 10px; background-color: #ff6b6b; color: white; border: none; border-radius: 4px; cursor: pointer;">關閉</button>
-            </div>
-            <div id="aiChatContent" style="min-height: 100px; max-height: 300px; overflow-y: auto; white-space: pre-wrap; border: 1px solid #eee; padding: 8px; margin-bottom: 10px; background-color: white; border-radius: 4px;">
-                <!-- 聊天訊息會在這裡顯示 -->
             </div>
         </div>
     </div>
@@ -486,53 +448,8 @@
             // 滑桿事件處理
             const slider = document.getElementById('mySlider');
             const sliderValue = document.getElementById('sliderValue');
-            const sheetUrl = 'https://docs.google.com/spreadsheets/d/1JBo4Po2o80BdrKYKjXN1_Ji0nDzMZ4Rdl26wXXd7bUs/edit?gid=0#gid=0';
-
-            // AI Chat Elements
-            const askAiBtn = document.getElementById('askAiBtn');
-            const aiChatPanel = document.getElementById('aiChatPanel');
-            const closeAiChatBtn = document.getElementById('closeAiChatBtn');
-            const aiChatContent = document.getElementById('aiChatContent');
-            let aiWs = null; // WebSocket instance for AI chat
-
-            async function appendToSheet(url, values) {
-                try {
-                    const response = await fetch('https://hshgpt.webduino.tw/api/sheets/append', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ url: url, values: values }),
-                    });
-
-                    if (!response.ok) {
-                        let errorMsg = `API請求錯誤 ${response.status}`;
-                        try {
-                            // 嘗試讀取更詳細的錯誤回應內容
-                            const errorText = await response.text();
-                            errorMsg += " - " + errorText;
-                        } catch (e) { /* 如果無法讀取回應內容，則忽略 */ }
-                        console.error(errorMsg);
-                        // 更新 deviceInfo 以顯示錯誤訊息
-                        deviceInfo.textContent = `試算表儲存失敗: API ${response.status}`;
-                        return;
-                    }
-
-                    const result = await response.json();
-                    if (result.success) {
-                        console.log('資料成功新增到試算表:', result.data);
-                        // 成功時不在UI上顯示訊息，避免過於頻繁更新，控制台日誌已足夠
-                    } else {
-                        console.error('新增資料到試算表失敗:', result);
-                        // 更新 deviceInfo 以顯示 API 回報的錯誤
-                        deviceInfo.textContent = `試算表儲存失敗: ${result.message || 'API回報錯誤'}`;
-                    }
-                } catch (error) { // 捕獲網路錯誤或 try 區塊中的其他 JavaScript 錯誤
-                    console.error('呼叫試算表 API 時發生錯誤:', error);
-                    // 更新 deviceInfo 以顯示 JavaScript 錯誤或網路問題
-                    deviceInfo.textContent = `試算表儲存失敗: ${error.message || '網路或腳本錯誤'}`;
-                }
-            }
             
-            slider.addEventListener('input', async function() {
+            slider.addEventListener('input', function() {
                 // 更新顯示的當前值
                 sliderValue.textContent = this.value;
                 
@@ -546,90 +463,7 @@
                         // deviceInfo.textContent = `設備狀態: 滑桿數據發送失敗 (${error.message})`; 
                     }
                 }
-
-                // 新增資料到試算表
-                const currentTime = new Date().toLocaleString();
-                const dataToSave = [deviceId, parseInt(this.value), currentTime];
-                await appendToSheet(sheetUrl, dataToSave);
             });
-
-            // AI Chat Logic
-            askAiBtn.addEventListener('click', () => {
-                aiChatPanel.style.display = 'block';
-                aiChatContent.innerHTML = ''; // 清空之前的對話
-
-                // 獲取當前溫度和濕度
-                const currentTempText = temperatureGauge.valueElement.textContent; // e.g., "25.0°C"
-                const currentTemp = parseFloat(currentTempText);
-                const currentHumidity = parseInt(slider.value);
-
-                const userPrompt = `你好，請問在攝氏 ${currentTemp} 度，濕度 ${currentHumidity}% 的環境下，是否適合種植小白菜？請提供一些建議。`;
-                
-                // 顯示使用者訊息
-                const userMsgDiv = document.createElement('div');
-                userMsgDiv.className = 'message user';
-                userMsgDiv.textContent = userPrompt;
-                aiChatContent.appendChild(userMsgDiv);
-                aiChatContent.scrollTop = aiChatContent.scrollHeight;
-
-                // 建立 WebSocket 連線
-                aiWs = new WebSocket(`wss://hshgpt.webduino.tw`);
-                let currentAiMessageDiv = null;
-
-                aiWs.onopen = () => {
-                    console.log('AI WebSocket 已連線');
-                    aiWs.send(JSON.stringify({ prompt: userPrompt }));
-                };
-
-                aiWs.onerror = (err) => {
-                    console.error('AI WebSocket 錯誤', err);
-                    const errorMsgDiv = document.createElement('div');
-                    errorMsgDiv.className = 'message error';
-                    errorMsgDiv.textContent = 'AI 服務連線錯誤，請稍後再試。';
-                    aiChatContent.appendChild(errorMsgDiv);
-                    aiChatContent.scrollTop = aiChatContent.scrollHeight;
-                    if (currentAiMessageDiv) currentAiMessageDiv = null; // Reset current AI message div
-                };
-
-                aiWs.onclose = () => {
-                    console.log('AI WebSocket 已斷線');
-                    if (currentAiMessageDiv) currentAiMessageDiv = null; // Reset on close as well
-                    // 可以選擇性地在這裡添加一條訊息到聊天內容，例如 "AI 連線已關閉"
-                };
-
-                aiWs.onmessage = (event) => {
-                    const data = JSON.parse(event.data);
-                    if (data.type === 'start') {
-                        currentAiMessageDiv = document.createElement('div');
-                        currentAiMessageDiv.className = 'message ai';
-                        aiChatContent.appendChild(currentAiMessageDiv);
-                    } else if (data.type === 'chunk') {
-                        if (currentAiMessageDiv) {
-                            currentAiMessageDiv.textContent += data.delta;
-                            aiChatContent.scrollTop = aiChatContent.scrollHeight;
-                        }
-                    } else if (data.type === 'end') {
-                        // 回應結束，可以做一些清理工作，如果需要的話
-                        currentAiMessageDiv = null; // Reset for next message
-                    } else if (data.type === 'error') {
-                        const errorMsgDiv = document.createElement('div');
-                        errorMsgDiv.className = 'message error';
-                        errorMsgDiv.textContent = 'AI 錯誤: ' + data.message;
-                        aiChatContent.appendChild(errorMsgDiv);
-                        aiChatContent.scrollTop = aiChatContent.scrollHeight;
-                        if (currentAiMessageDiv) currentAiMessageDiv = null;
-                    }
-                };
-            });
-
-            closeAiChatBtn.addEventListener('click', () => {
-                aiChatPanel.style.display = 'none';
-                if (aiWs && aiWs.readyState === WebSocket.OPEN) {
-                    aiWs.close();
-                }
-                aiWs = null; // 清理 WebSocket 實例
-            });
-
         });
     </script>
 </body>
